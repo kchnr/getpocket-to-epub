@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+import os
+import sys
+import json
+import fileinput
+import time
+from slugify import slugify
+from embedly import Embedly
+
+def RateLimited(maxPerSecond):
+    minInterval = 1.0 / float(maxPerSecond)
+    def decorate(func):
+        lastTimeCalled = [0.0]
+        def rateLimitedFunction(*args,**kargs):
+            elapsed = time.clock() - lastTimeCalled[0]
+            leftToWait = minInterval - elapsed
+            if leftToWait>0:
+                time.sleep(leftToWait)
+            ret = func(*args,**kargs)
+            lastTimeCalled[0] = time.clock()
+            return ret
+        return rateLimitedFunction
+    return decorate
+
+def create_embedly():
+    key = "50f2719897db4394ab1ff50b0c88eb08"
+    return Embedly(key)
+
+@RateLimited(15)
+def download_article(embedly, url):
+    return embedly.extract(url)
+
+def _save_article(title, content, extension):
+    title = slugify(title)
+    file_name = "./articles/{0}.{1}".format(slugify(title), extension)
+    with open(file_name, 'w') as f:
+        f.write(content)
+
+def get_keywords(article):
+    keywords = article
+    data = ["score,keyword"]
+    for keyword in article.data['keywords']:
+        k_data = "{0},{1}".format(keyword['score'],keyword['name'])
+        data.append(k_data)
+    return '\n'.join(data)
+
+def save_article(article): 
+    if (article.data and article.data.get('content')):
+        title = article.data['title']
+        json_str = json.dumps(article.__dict__)
+        _save_article(title, json_str, 'json')
+
+def dump_keywords(url):
+    print url
+    article = download_article(create_embedly(), url)
+    print get_keywords(article)
+
+def dump_article(url):
+    article = download_article(create_embedly(), url)
+    print json.dumps(article.__dict__)
+    print article['title']
+    print article['content']
+
+def debug_article(url):
+    try:
+        article = download_article(create_embedly(), url)
+        print article.data['title']
+        article.data['title']
+    except:
+        print sys.exc_info()[0]
+
+def debug_main():
+    for url in fileinput.input():
+        print url
+        debug_article(url)
+
+def dump_main():
+    for url in fileinput.input():
+        dump_article(url)
+        break
+
+
+def download_main():
+    embedly = create_embedly()
+    for url in fileinput.input():
+        print 'Downloading {0}'.format(url)
+        article = download_article(embedly, url)
+        save_article(article)
+
+if (__name__ == '__main__'):
+    download_main()
