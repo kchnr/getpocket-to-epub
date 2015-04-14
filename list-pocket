@@ -1,0 +1,17 @@
+#!/usr/bin/env python 
+
+import re
+import json
+from pocket import Pocket
+from time import sleep
+import pocket_utils as pck
+
+pocket = pck.get_pocket_instance()
+items =  pocket.get(state="all", since=pck.last_timestamp())
+pck.set_timestamp()
+
+if (items[0]['list']):
+    links = [o['given_url'] for _,o in items[0]['list'].iteritems()]
+    for l in links:
+        print l
+
