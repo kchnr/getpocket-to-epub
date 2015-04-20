@@ -1,0 +1,41 @@
+#!/bin/bash
+#pandoc epub metadata ref: http://johnmacfarlane.net/pandoc/demo/example9/epub-metadata.html
+
+F_PATH=$1
+FILE=$(cat $F_PATH)
+
+TITLE=$(echo $FILE | jq '.data.title' -r)
+CREATOR=$(echo $FILE | jq '.data.author' -r)
+DATE=$(echo $FILE | jq '.data.published' -r)
+LANG=$(echo $FILE | jq '.data.language' -r)
+SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r)
+DESC=$(echo $FILE | jq '.data.summary' -r)
+COVER=$(echo $FILE | jq '.data.images[0].url' -r)
+CONTENT=$(echo $FILE | jq '.data.content' -r)
+CSS=base.css
+
+F_META=epub.meta
+function epub_meta_yaml() {
+echo "
+title:$TITLE
+creator:$CREATOR
+date:$DATE
+language:$LANG
+subject:$SUBJ
+description:$DESC
+cover-image:$COVER
+stylesheet:$CSS
+" > $F_META
+}
+
+BEFORE=before.html
+AFTER=after.html
+echo "<h1>$TITLE</h1><h2>Intro</h2><p>$DESC</p>" > $BEFORE
+echo "<ul><li>Author: $CREATOR</li><li>Date: $DATE</li></ul>" > $AFTER
+epub_meta_yaml
+
+#--epub-cover-image=$COVER 
+echo $CONTENT | pandoc  -s --toc --normalize --reference-links --chapters -B before.html -A after.html --epub-metadata=$F_META -r html -w epub -o ${F_PATH}.epub
+
+rm $BEFORE $AFTER
+
