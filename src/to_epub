@@ -2,40 +2,65 @@
 #pandoc epub metadata ref: http://johnmacfarlane.net/pandoc/demo/example9/epub-metadata.html
 
 F_PATH=$1
+F_NAME=${F_PATH/.json/}
 FILE=$(cat $F_PATH)
 
-TITLE=$(echo $FILE | jq '.data.title' -r)
-CREATOR=$(echo $FILE | jq '.data.author' -r)
-DATE=$(echo $FILE | jq '.data.published' -r)
-LANG=$(echo $FILE | jq '.data.language' -r)
-SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r)
-DESC=$(echo $FILE | jq '.data.summary' -r)
-COVER=$(echo $FILE | jq '.data.images[0].url' -r)
-CONTENT=$(echo $FILE | jq '.data.content' -r)
-CSS=base.css
+mkdir $F_NAME
+pushd $F_NAME 
+  TITLE=$(echo $FILE | jq '.data.title' -r)
+  CREATOR=$(echo $FILE | jq '.data.authors[0].name' -r)
+  CREATOR_URL=$(echo $FILE | jq '.data.authors[0].url' -r)
+  ARTICLE_URL=$(echo $FILE | jq '.data.url' -r)
+  DATE=$(echo $FILE | jq '.data.published' -r)
+  LANG=$(echo $FILE | jq '.data.language' -r)
+  SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r)
+  DESC=$(echo $FILE | jq '.data.description' -r)
+  COVER=$(echo $FILE | jq '.data.images[0].url' -r)
+  CONTENT=$(echo $FILE | jq '.data.content' -r)
+  CSS=base.css
 
-F_META=epub.meta
-function epub_meta_yaml() {
-echo "
-title:$TITLE
-creator:$CREATOR
-date:$DATE
-language:$LANG
-subject:$SUBJ
-description:$DESC
-cover-image:$COVER
+  if [ -z "$CONTENT" ] || [ "null" == "$CONTENT" ]; then
+    echo "Artigo sem conteúdo"
+    exit 
+  fi
+
+  if [ "$DESC" ] && [ "$DESC" != "null" ]; then
+    CONTENT="<h2>Summary</h2><p>$DESC</p>$CONTENT"
+  fi
+  CONTENT="<h1>$TITLE</h1>$CONTENT"
+
+  CONTENT="$CONTENT<p><ul>"
+  if [ "$CREATOR" ] && [ "$CREATOR" != "null" ]; then
+    CONTENT="$CONTENT<li>Author: $CREATOR</li>"
+  fi
+  if [ "$CREATOR_URL" ] && [ "$CREATOR_URL" != "null" ]; then
+    CONTENT="$CONTENT<li>Author url: $CREATOR_URL</li>"
+  fi
+  if [ "$DATE" ] && [ "$DATE" != "null" ]; then
+    DATE=$(date +"%Y-%m-%d" -d @$(  echo "($DATE + 500) / 1000" | bc))
+    CONTENT="$CONTENT<li>Date: $DATE</li>"
+  fi
+  if [ "$ARTICLE_URL" ] && [ "$ARTICLE_URL" != "null" ]; then
+    CONTENT="$CONTENT<li><a href='$ARTICLE_URL'>$ARTICLE_URL</a></li>"
+  fi
+  CONTENT="$CONTENT</ul></p>"
+
+  wget -q $COVER 
+  COVER=$(baseName "$COVER")
+
+  F_META=epub.meta
+  cat <<-EOF > $F_META
+title:${TITLE/null/}
+creator:${CREATOR/null/}
+date:${DATE/null/}
+language:${LANG/null/}
+subject:$(echo $SUBJ | tr '\n' ' ')
+description:${DESC/null/}
+cover-image:./${COVER/null/}
 stylesheet:$CSS
-" > $F_META
-}
+EOF
 
-BEFORE=before.html
-AFTER=after.html
-echo "<h1>$TITLE</h1><h2>Intro</h2><p>$DESC</p>" > $BEFORE
-echo "<ul><li>Author: $CREATOR</li><li>Date: $DATE</li></ul>" > $AFTER
-epub_meta_yaml
+  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER -r html -w epub -o ../${F_PATH/.json/.epub}
+popd 
 
-#--epub-cover-image=$COVER 
-echo $CONTENT | pandoc  -s --toc --normalize --reference-links --chapters -B before.html -A after.html --epub-metadata=$F_META -r html -w epub -o ${F_PATH}.epub
-
-rm $BEFORE $AFTER
-
+rm -rf $F_NAME
