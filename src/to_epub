@@ -1,5 +1,4 @@
 #!/bin/bash
-#pandoc epub metadata ref: http://johnmacfarlane.net/pandoc/demo/example9/epub-metadata.html
 
 F_PATH=$1
 F_NAME=${F_PATH/.json/}
