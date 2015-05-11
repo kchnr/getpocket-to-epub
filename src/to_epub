@@ -1,6 +1,6 @@
 #!/bin/bash
 
-F_PATH=$1
+F_PATH=$(realpath $1)
 F_NAME=${F_PATH/.json/}
 FILE=$(cat $F_PATH)
 
@@ -59,7 +59,7 @@ cover-image:./${COVER/null/}
 stylesheet:$CSS
 EOF
 
-  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER -r html -w epub -o ../${F_PATH/.json/.epub}
+  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER -r html -w epub -o ${F_PATH/.json/.epub}
 popd 
 
 rm -rf $F_NAME

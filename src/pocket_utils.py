@@ -22,7 +22,7 @@ def last_timestamp():
     return 0
 
 def get_consumer_key():
-    return ""
+    return "40132-9d048aa7d661e8d335b5027f"
 
 def get_request_token():
     consumer_key = get_consumer_key()

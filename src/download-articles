@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+python list-pocket | python embedly-extract
+
+FILES=$(ls articles/*.json)
+
+for f in $FILES; do 
+  echo "Creating epub for $f"
+  sh to_epub $f
+done
