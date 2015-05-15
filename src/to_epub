@@ -23,10 +23,11 @@ pushd $F_NAME
     exit 
   fi
 
-  if [ "$DESC" ] && [ "$DESC" != "null" ]; then
-    CONTENT="<h2>Summary</h2><p>$DESC</p>$CONTENT"
-  fi
   CONTENT="<h1>$TITLE</h1>$CONTENT"
+
+  if [ "$DESC" ] && [ "$DESC" != "null" ]; then
+    CONTENT="<h1>Abstract</h1><p>$DESC</p>$CONTENT"
+  fi
 
   CONTENT="$CONTENT<p><ul>"
   if [ "$CREATOR" ] && [ "$CREATOR" != "null" ]; then
