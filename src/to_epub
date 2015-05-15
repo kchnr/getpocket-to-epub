@@ -12,7 +12,9 @@ pushd $F_NAME
   ARTICLE_URL=$(echo $FILE | jq '.data.url' -r)
   DATE=$(echo $FILE | jq '.data.published' -r)
   LANG=$(echo $FILE | jq '.data.language' -r)
-  SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r)
+  SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r | tr '\n' ', ')
+
+
   DESC=$(echo $FILE | jq '.data.description' -r)
   DESC=${DESC/null/}
   COVER=$(echo $FILE | jq '.data.images[0].url' -r)
