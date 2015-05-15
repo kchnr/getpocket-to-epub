@@ -14,9 +14,12 @@ pushd $F_NAME
   LANG=$(echo $FILE | jq '.data.language' -r)
   SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r)
   DESC=$(echo $FILE | jq '.data.description' -r)
+  DESC=${DESC/null/}
   COVER=$(echo $FILE | jq '.data.images[0].url' -r)
   CONTENT=$(echo $FILE | jq '.data.content' -r)
-  CSS=base.css
+  CSS=../../base.css
+
+  echo $(realpath $CSS)
 
   if [ -z "$CONTENT" ] || [ "null" == "$CONTENT" ]; then
     echo "Artigo sem conteúdo"
@@ -26,7 +29,7 @@ pushd $F_NAME
   CONTENT="<h1>$TITLE</h1>$CONTENT"
 
   if [ "$DESC" ] && [ "$DESC" != "null" ]; then
-    CONTENT="<h1>Abstract</h1><p>$DESC</p>$CONTENT"
+    CONTENT="<h1>Abstract</h1><blockquote><p>$DESC</p></blockquote>$CONTENT"
   fi
 
   CONTENT="$CONTENT<p><ul>"
@@ -48,19 +51,17 @@ pushd $F_NAME
   wget -q $COVER 
   COVER=$(baseName "$COVER")
 
-  F_META=epub.meta
+  F_META=metadata.xml
   cat <<-EOF > $F_META
-title:${TITLE/null/}
-creator:${CREATOR/null/}
-date:${DATE/null/}
-language:${LANG/null/}
-subject:$(echo $SUBJ | tr '\n' ' ')
-description:${DESC/null/}
-cover-image:./${COVER/null/}
-stylesheet:$CSS
+<dc:title>${TITLE/null/}</dc:title>
+<dc:creator>${CREATOR/null/}</dc:creator>
+<dc:date>${DATE/null/}</dc:date>
+<dc:language>${LANG/null/}</dc:language>
+<dc:subject>$SUBJ</dc:subject>
+<dc:description>$DESC</dc:description>
 EOF
 
-  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER -r html -w epub -o ${F_PATH/.json/.epub}
+  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER --epub-stylesheet=$CSS -r html -w epub -o ${F_PATH/.json/.epub}
 popd 
 
-rm -rf $F_NAME
+#rm -rf $F_NAME
