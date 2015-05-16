@@ -31,7 +31,7 @@ pushd $F_NAME
   CONTENT="<h1>$TITLE</h1>$CONTENT"
 
   if [ "$DESC" ] && [ "$DESC" != "null" ]; then
-    CONTENT="<h1>Abstract</h1><blockquote><p>$DESC</p></blockquote>$CONTENT"
+    CONTENT="<blockquote><p>$DESC</p></blockquote>$CONTENT"
   fi
 
   CONTENT="$CONTENT<p><ul>"
