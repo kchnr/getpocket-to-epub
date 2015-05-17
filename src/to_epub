@@ -1,6 +1,8 @@
 #!/bin/bash
 
 F_PATH=$(realpath $1)
+echo "Path $F_PATH"
+
 F_NAME=${F_PATH/.json/}
 FILE=$(cat $F_PATH)
 
@@ -12,16 +14,13 @@ pushd $F_NAME
   ARTICLE_URL=$(echo $FILE | jq '.data.url' -r)
   DATE=$(echo $FILE | jq '.data.published' -r)
   LANG=$(echo $FILE | jq '.data.language' -r)
-  SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r | tr '\n' ', ')
-
+  SUBJ=$(echo $FILE | jq '.data.keywords[].name' -r | head -n2 | tr '\n' ', ')
 
   DESC=$(echo $FILE | jq '.data.description' -r)
   DESC=${DESC/null/}
   COVER=$(echo $FILE | jq '.data.images[0].url' -r)
   CONTENT=$(echo $FILE | jq '.data.content' -r)
-  CSS=../../base.css
-
-  echo $(realpath $CSS)
+  CSS=$(realpath ../../base.css)
 
   if [ -z "$CONTENT" ] || [ "null" == "$CONTENT" ]; then
     echo "Artigo sem conteúdo"
@@ -29,7 +28,6 @@ pushd $F_NAME
   fi
 
   CONTENT="<h1>$TITLE</h1>$CONTENT"
-
   if [ "$DESC" ] && [ "$DESC" != "null" ]; then
     CONTENT="<blockquote><p>$DESC</p></blockquote>$CONTENT"
   fi
@@ -50,7 +48,7 @@ pushd $F_NAME
   fi
   CONTENT="$CONTENT</ul></p>"
 
-  wget -q $COVER 
+  OK=$(wget -q $COVER && echo 1)
   COVER=$(baseName "$COVER")
 
   F_META=metadata.xml
