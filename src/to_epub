@@ -66,4 +66,4 @@ EOF
   echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER --epub-stylesheet=$CSS -r html -w epub -o ${F_PATH/.json/.epub}
 popd 
 
-#rm -rf $F_NAME
+rm -rf $F_NAME
