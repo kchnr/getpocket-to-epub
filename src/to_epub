@@ -19,6 +19,7 @@ pushd $F_NAME
   DESC=$(echo $FILE | jq '.data.description' -r)
   DESC=${DESC/null/}
   COVER=$(echo $FILE | jq '.data.images[0].url' -r)
+  COVER=${COVER/null/}
   CONTENT=$(echo $FILE | jq '.data.content' -r)
   CSS=$(realpath ../../base.css)
 
@@ -48,8 +49,15 @@ pushd $F_NAME
   fi
   CONTENT="$CONTENT</ul></p>"
 
-  OK=$(wget -q $COVER && echo 1)
-  COVER=$(baseName "$COVER")
+  if [ -f "$COVER" ]; then
+    wget -q $COVER
+    COVER=$(baseName "$COVER")
+    if [ -f $COVER ]; then
+      COVER="--epub-cover-image=$COVER"
+    else
+      COVER=''
+    fi
+  fi
 
   F_META=metadata.xml
   cat <<-EOF > $F_META
@@ -61,7 +69,7 @@ pushd $F_NAME
 <dc:description>$DESC</dc:description>
 EOF
 
-  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META --epub-cover-image=$COVER --epub-stylesheet=$CSS -r html -w epub -o ${F_PATH/.json/.epub}
+  echo $CONTENT | pandoc -s --normalize --reference-links --chapters --epub-metadata=$F_META $COVER --epub-stylesheet=$CSS -r html -w epub -o ${F_PATH/.json/.epub}
 popd 
 
 rm -rf $F_NAME
